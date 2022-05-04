@@ -86,3 +86,81 @@ alter table Person
 add City nvarchar(50)
 
 --- 2 tund SQL 
+
+select * from Person
+select * from Gender
+
+-- otsin konkreetset linna veerust city
+select * from Person where City = 'Gotham'
+-- välsitab kõik, kes elavad Gothamis
+select * from Person where City <> 'Gotham'
+select * from Person where City != 'Gotham'
+
+-- kõik, kes on 20, 24 ja 35 aastased
+select * from Person where Age = 20 or Age = 24 or Age = 35
+select * from Person where Age in (20, 24, 35)
+-- kõik, kes on 20 kuni 25 a vanad
+select * from Person where Age between 20 and 25
+-- kõik linnad, mis algavad G-tähega ja käskluseks on %-märk
+select * from Person where City like 'G%'
+-- ükstapuha, kus asub antud juhul märk @
+select * from Person where Email like '%@%'
+-- otsib, kus teine märk on @
+select * from Person where Email like '_@_.com'
+-- otsib kõike ridu, kus ei ole kuvatud @ märki
+select * from Person where Email not like '%@%'
+-- otsib nimesid, kus esimene märk algab S, B ja A-ga
+select * from Person where Name like '[SBA]%'
+-- otsib nimesid, kus esimene märk ei ole S, B ja A
+select * from Person where Name like '[^SBA]%'
+-- otsime linna järgi ja täpsustame vanuse
+select * from Person 
+where (City = 'Gotham' or City = 'Atlantis') and Age < 36
+-- paneb tähestikulisse järjestusse
+select * from Person order by Name
+-- selekteerib vastupidises järjestuses
+select * from Person order by Name desc
+-- võtame kolm ülemist rida
+select top 3 * from Person
+-- võtab nime ja vanuse järgi kaks ülemist rida
+select top 2 Age, Name from Person
+--- võtame pooled nimekirjas olnutest
+select top 50 percent * from Person
+-- hakkab vanemast pihta ja langevas järjekorras
+select * from Person order by Age desc
+-- hakkab kõige vanemast ja näitab ainult esimest
+select top 1 * from Person order by Age desc
+
+--- saan välja toodud veergudes olevaid andmeid
+select distinct Name, City from Person
+
+create table Employee
+(
+Id int not null primary key,
+Name nvarchar(50) not null,
+Gender nvarchar(50) not null,
+Salary int null,
+City nvarchar(50)
+)
+
+-- andmete sisestamine tabelisse
+insert into Employee (Id, Name, Gender, Salary, City)
+values (1, 'Tom', 'Male', 4000, 'London')
+insert into Employee (Id, Name, Gender, Salary, City)
+values (2, 'Pam', 'Female', 3000, 'New York')
+insert into Employee (Id, Name, Gender, Salary, City)
+values (3, 'John', 'Male', 3500, 'London')
+insert into Employee (Id, Name, Gender, Salary, City)
+values (4, 'Sam', 'Male', 4500, 'London')
+insert into Employee (Id, Name, Gender, Salary, City)
+values (5, 'Todd', 'Male', 2800, 'Sydney')
+insert into Employee (Id, Name, Gender, Salary, City)
+values (6, 'Ben', 'Male', 7000, 'New York')
+insert into Employee (Id, Name, Gender, Salary, City)
+values (7, 'Sara', 'Female', 4800, 'Sydney')
+insert into Employee (Id, Name, Gender, Salary, City)
+values (8, 'Valarie', 'Female', 5500, 'New York')
+insert into Employee (Id, Name, Gender, Salary, City)
+values (9, 'James', 'Male', 6500, 'London')
+insert into Employee (Id, Name, Gender, Salary, City)
+values (10, 'Russell', 'Male', 8800, 'London')
