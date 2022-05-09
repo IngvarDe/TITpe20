@@ -164,3 +164,111 @@ insert into Employee (Id, Name, Gender, Salary, City)
 values (9, 'James', 'Male', 6500, 'London')
 insert into Employee (Id, Name, Gender, Salary, City)
 values (10, 'Russell', 'Male', 8800, 'London')
+
+
+-- 2 tund 
+
+create table Department
+(
+	Id int primary key,
+	DepartmentName nvarchar(20),
+	Location nvarchar(20),
+	DepartmentHead nvarchar(20)
+)
+
+insert into Department (Id, DepartmentName, Location, DepartmentHead)
+values (1, 'IT', 'London', 'Rick')
+insert into Department (Id, DepartmentName, Location, DepartmentHead)
+values (2, 'Payroll', 'Delhi', 'Ron')
+insert into Department (Id, DepartmentName, Location, DepartmentHead)
+values (3, 'HR', 'New York', 'Christie')
+insert into Department (Id, DepartmentName, Location, DepartmentHead)
+values (4, 'Other Department', 'Sydney', 'Cindrella')
+
+select * from Employee
+select * from Department
+
+alter table Employee
+add  DepartmentId nvarchar(20)
+
+select Name, Gender, Salary, DepartmentName
+from Employee
+left join Department
+on Employee.DepartmentId = Department.Id
+
+
+select SUM(Salary) from Employee  --- arvutab kõikide palgad kokku
+--- kui Salary veerg on nvarchar, siis kasutab cast-i
+select SUM(CAST(Salary as int)) from Employee
+--- min palga saaja ja kui kasutan max, siis kõige suurema palga saaja
+select MIN(Salary) from Employee
+--- ühe kuu palgafond linnade lõikes
+select City, SUM(Salary) as TotalSalary from Employee group by City
+
+select City, Gender, SUM(Salary) as TotalSalary from Employee
+group by City, Gender  --- toome soolise erisuse mängu
+
+select City, Gender, SUM(Salary) as TotalSalary from Employee
+group by City, Gender
+order by City -- order by-ga paneme linnad tähestikulisse järjestusse
+
+select Gender, City, SUM(Salary) as TotalSalary from Employee
+group by City, Gender
+order by City  --peale selecti toome välja järjestuse päringu tulemuses
+
+select COUNT(*) from Employee --loeb ära, mitu inimest on nimekirjas, 
+--- * asemele võib panna ak muid veergude nimesid
+select * from Employee
+
+--- mitu töötajat on soo ja linna kaupa
+select Gender, City, SUM(Salary) as [Total Salary],
+COUNT (Id) as [Total Employee(s)]
+from Employee
+group by Gender, City
+
+-- kuvab ainult kõik mehed linnade kaupa
+select Gender, City, SUM(Salary) as [Total Salary],
+COUNT (Id) as [Total Employee(s)]
+from Employee
+where Gender = 'Male'
+group by Gender, City
+
+--- kasutame having tingimust otsimisel
+select Gender, City, SUM(Salary) as [Total Salary],
+COUNT (Id) as [Total Employee(s)]
+from Employee
+group by Gender, City
+having Gender = 'Female'
+
+
+select * from Employee where SUM(Salary) > 4000
+-- annab veateate ja soovib having kasutamist
+
+--- 
+select Gender, City, SUM(Salary) as TotalSalary, COUNT(Id) as [Total Employee(s)]
+from Employee group by Gender, City
+having SUM(Salary) < 4000
+
+--- loome tabeli, milles hakatakse automaatselt nummerdama Id-d
+cReaTe table Test1
+(
+Id int identity(1, 1),
+Value nvarchar(20)
+)
+
+insert into Test1 values('X')
+select * from Test1
+
+--- kustutame veeru City Employee tabelist
+alter table Employee
+drop column City
+
+
+-- inner join
+-- kuvab neid, kellel oon DepartmentName all olemas väärtus
+select Name, Gender, Salary, DepartmentName
+from Employee
+inner join Department
+on Employee.DepartmentId = Department.Id
+
+--- 3 tund SQL
