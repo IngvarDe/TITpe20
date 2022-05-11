@@ -272,3 +272,145 @@ inner join Department
 on Employee.DepartmentId = Department.Id
 
 --- 3 tund SQL
+
+select * from Person
+-- otsib kõik New Yorki elanikud ülesse
+select * from Person where City = 'New York'
+-- ei soovi New Yorki elanikke näha
+select * from Person where City <> 'New York'
+select * from Person where City != 'New York'
+
+--- konkreetse vanusega inimesed
+select * from Person where Age = 20 or Age = 24 or Age = 40
+--- nagu eelmine päring, aga lühemalt
+select * from Person where Age in (20, 24, 40)
+--- mingis vanusevahemikus olevad inimesed
+select * from Person where Age between 20 and 25
+--- kõik linnad, mis algavad G-tähega
+select * from Person where City like 'G%'
+---kui kasutame kaks korda %-märki, siis otsib igalt pool @-märki (selle märgi asemele 
+--- võib panna igasuguseid märke)
+select * from Person where Email like '%@%' 
+-- kõik emailid, kus ei asu @-märki
+select * from Person where Email not like '%@%'
+-- alakriipsudega määratleme ära @-märgi asetuse soovitud otsingus
+select * from Person where Email like '_@_.com'
+--- otsib nimesid, kus esimene märk algab S, C ja I-ga.
+select * from Person where Name like '[SCI]%'
+-- soovime otsida, kus esimene täht ei ole nimes S, C, I
+select * from Person where Name like '[^SCI]%'  
+-- linn peab olema New York või Gotham ja vanust alla 30 aasta
+select * from Person where (City = 'New York' or City = 'Gotham') and Age < 30
+--- nime järgi selekteerime
+select * from Person order by Name
+
+
+---- JOIN-d
+select * from Department
+select * from Employee
+
+-- inner join, näitab ainult neid ridasid, mille on olemas kattuvus osakonna lõikes
+select Name, Gender, Salary, DepartmentName
+from Employee
+inner join Department
+on Employee.DepartmentId = Department.Id
+
+--left join, kui soovime kõiki andmeid näha
+select Name, Gender, Salary, DepartmentName
+from Employee
+left join Department
+on Employee.DepartmentId = Department.Id
+
+-- kuidas saada DepartmentName alla uus nimetus e antud juhul Other Department
+-- right outer join
+select Name, Gender, Salary, DepartmentName
+from Employee
+right outer join Department
+on Employee.DepartmentId = Department.Id
+
+select * from Department
+select * from Employee
+
+--- outer join
+--- kuidas saada kõikide tabelite andmed ühte päringusse
+select Name, Gender, Salary, DepartmentName
+from Employee
+full outer join Department
+on Employee.DepartmentId = Department.Id
+
+--- cross join võtab kaks allpool olevat tabelit kokku ja korrutab need omavahel läbi
+--- igas osakonnas oleva töötajaga
+select Name, Gender, Salary, DepartmentName
+from Employee
+cross join Department
+
+--- keerulisemad JOIN-d
+-- kaks isikut, kelle ei ole väärtust osakondades
+select Name, Gender, Salary, DepartmentName
+from Employee
+left join Department
+on Employee.DepartmentId = Department.Id
+where Employee.DepartmentId is null
+
+select Name, Gender, Salary, DepartmentName
+from Employee
+left join Department
+on Employee.DepartmentId = Department.Id
+where Department.Id is null
+
+--- right join
+select Name, Gender, Salary, DepartmentName
+from Employee
+right join Department
+on Employee.DepartmentId = Department.Id
+where Employee.DepartmentId is null
+
+--- full join
+-- otsib ülesse mõlemas tabelis NULL väärtustega olevad read
+select Name, Gender, Salary, DepartmentName
+from Employee
+full join Department
+on Employee.DepartmentId = Department.Id
+where Employee.DepartmentId is null
+or Department.Id is null
+
+--- self join
+select * from Employee
+
+--- tabeli nime muutmine
+-- esimene string on vana tabeli nimi ja järgmine string uus nimetus
+sp_rename 'Department1', 'Department'
+
+--
+alter table Employee
+add ManagerId int 
+
+-- self join on tabeli sees oleva info kokku panemine
+select E.Name as Employee, M.Name as Manager
+from Employee E
+left join Employee M
+on E.ManagerId = M.Id
+
+--inner join
+select E.Name as Employee, M.Name as Manager
+from Employee E
+inner join Employee M
+on E.ManagerId = M.Id
+
+--- cross join
+select E.Name as Employee, M.Name as Manager
+from Employee E
+cross join Employee M
+
+--
+select ISNULL('Asd', 'No Manager') as Manager
+
+--- saab ka teistmoodi teha
+select coalesce(NULL, 'No Manager') as Manager
+
+
+--- neile kellele ei ole ülemust määratud, siis paneb neile No Manager teksti
+select E.Name as Employee, ISNULL(M.Name, 'No Manager') as Manager
+from Employee E
+left join Employee M
+on E.ManagerId = M.Id
