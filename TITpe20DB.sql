@@ -414,3 +414,157 @@ select E.Name as Employee, ISNULL(M.Name, 'No Manager') as Manager
 from Employee E
 left join Employee M
 on E.ManagerId = M.Id
+
+--- 4 tund SQL
+
+--- teeme päringu, kus kasutame case-i
+select E.Name as Employee, case when M.Name is null then 'No Manager'
+else M.Name end as Manager
+from Employee E
+left join Employee M
+on E.ManagerId = M.Id
+
+--- lisame kaks veergu juurde
+alter table Employee
+add MiddleName nvarchar(30)
+alter table Employee
+add LastName nvarchar(30)
+
+update Employee set MiddleName = 'Nick', LastName = 'Jones'
+where Id = 1
+update Employee set MiddleName = NULL, LastName = 'Anderson'
+where Id = 2
+update Employee set MiddleName = NULL, LastName = NULL
+where Id = 3
+update Employee set MiddleName = NULL, LastName = 'Smith'
+where Id = 4
+update Employee set MiddleName = 'Todd', LastName = 'Someone'
+where Id = 5
+update Employee set MiddleName = 'Ten', LastName = 'Sven'
+where Id = 6
+update Employee set MiddleName = NULL, LastName = 'Connor'
+where Id = 7
+update Employee set MiddleName = 'Balerine', LastName = NULL
+where Id = 8
+update Employee set MiddleName = '007', LastName = 'Bond'
+where Id = 9
+update Employee set MiddleName = NULL, LastName = 'Crowe'
+where Id = 10
+
+select * from Employee
+-- igast reast võtab esimese täidetud lahtri ja kuvab ainult seda
+select Id, coalesce(FirstName,  MiddleName, LastName) as Name
+from Employee
+
+
+--- loome kaks tabelit
+create table IndianCustomers
+(
+Id int identity(1, 1),
+Name nvarchar(25),
+Email nvarchar(25)
+)
+
+create table UKCustomers
+(
+Id int identity(1, 1),
+Name nvarchar(25),
+Email nvarchar(25)
+)
+
+insert into IndianCustomers values('Raj', 'R@R.com')
+insert into IndianCustomers values('Sam', 'S@S.com')
+
+insert into UKCustomers values('Ben', 'B@B.com')
+insert into UKCustomers values('Sam', 'S@S.com')
+
+select * from IndianCustomers
+select * from UKCustomers
+
+--- kasutame union all, mis näitab kõiki ridu
+select Id, Name, Email from IndianCustomers
+union all
+select Id, Name, Email from UKCustomers
+
+-- korduvate väärtustega read pannakse ühte ja ei korrata
+select Id, Name, Email from IndianCustomers
+union
+select Id, Name, Email from UKCustomers
+
+--- kuidas tulemust sorteerida nime järgi
+select Id, Name, Email from IndianCustomers
+union all
+select Id, Name, Email from UKCustomers
+order by Name
+
+--- stored procedure
+create procedure spGetEmployees
+as begin
+	select FirstName, Gender from Employee
+end
+
+-- kolm erinevat viisi sp esile kutsuda
+spGetEmployees
+exec spGetEmployees
+execute spGetEmployees
+
+-- tegime sp, kus on kaks parameetrit
+create proc spGetEmployeesByGenderAndDepartment
+@Gender nvarchar(20),
+@DepartmentId int
+as begin
+	select FirstName, Gender, DepartmentId from Employee
+	where Gender = @Gender
+	and DepartmentId = @DepartmentId
+end
+
+--- kui allpool olevat käsklust käima panna, siis nõuab Gender parameetrit
+spGetEmployeesByGenderAndDepartment
+-- õige variant
+spGetEmployeesByGenderAndDepartment 'Male', 1
+-- sp parameetrite järjekorrast saab mööda minna
+spGetEmployeesByGenderAndDepartment @DepartmentId = 1, @Gender = 'Male'
+-- kuidas vaadata sp sisu
+sp_helptext spGetEmployeesByGenderAndDepartment
+
+-- kuidas muuta sp-d ja võti peale panna, et keegi teine ei saaks muuta
+alter proc spGetEmployeesByGenderAndDepartment
+@Gender nvarchar(20),
+@DepartmentId int
+with encryption --paneb võtme peale
+as begin
+	select FirstName, Gender, DepartmentId from Employee
+	where Gender = @Gender
+	and DepartmentId = @DepartmentId
+end
+
+-- ei näe enam sp sisu, kui encryption on peale pandud
+sp_helptext spGetEmployeesByGenderAndDepartment
+
+select * from Employee
+
+-- sp tegemine
+create proc spGetEmployeeCountByGender
+@Gender nvarchar(20),
+@EmployeeCount int output
+as begin
+	select @EmployeeCount = COUNT(Id) from Employee where Gender = @Gender
+end
+
+--- if ja else loogika, kus näitab ära, töötajate arvu ja vastava teksti,
+--- mis asub stringi sees
+declare @TotalCount int
+exec spGetEmployeeCountByGender 'Male', @TotalCount out
+if(@TotalCount = 0)
+	print '@TotalCount is null'
+else
+	print '@Total is not null'
+print @TotalCount
+
+-- näitab ära, et mitu rida vastab nõutele
+declare @TotalCount int
+exec spGetEmployeeCountByGender @EmployeeCount = @TotalCount out,
+@Gender = 'Male'
+print @TotalCount
+
+--- 5 tund SQL
