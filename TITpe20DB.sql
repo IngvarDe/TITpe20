@@ -568,3 +568,155 @@ exec spGetEmployeeCountByGender @EmployeeCount = @TotalCount out,
 print @TotalCount
 
 --- 5 tund SQL
+
+-- sp sisu vaatamine, näitab parameetreid ja üldist infot
+sp_help spGetEmployeeCountByGender
+-- tabeli sisu vaatmine
+sp_help Employee
+-- saame teada, millest see sp sõltub
+sp_depends spGetEmployeeCountByGender
+-- vaatame tabli sõltuvust
+sp_depends Employee
+
+-- 
+create proc spGetNameById
+@Id int,
+@Name nvarchar(20) output
+as begin
+	select @Name = Id, @Name = FirstName from Employee
+end
+
+select * from Employee
+execute spGetNameById 1, 'Tom'
+
+--- annab kogu tabeli ridade arvu
+create proc spTotalCount2
+@TotalCount int output
+as begin
+	select @TotalCount = count(Id) from Employee
+end
+
+--- saame teada, et mitu rida andmeid on tabelis
+declare @TotalEmployees int
+exec spTotalCount2 @TotalEmployees output
+select @TotalEmployees
+
+
+---- mis id all on keegi nime järgi
+create proc spGetNameById1
+@Id int,
+@FirstName nvarchar(50) output
+as begin 
+	select @FirstName = FirstName from Employee where Id = @Id
+end
+-- nüüd kasutame üleval olevat sp-d
+-- outputi kasutamine
+declare @FirstName nvarchar(50)
+execute spGetNameById1 4, @FirstName output
+print 'Name of the employee = ' + @FirstName
+
+--- out kasutamine
+declare @FirstName nvarchar(20)
+execute spGetNameById1 1, @FirstName out
+print 'Name = ' + @FirstName
+
+-- kasutame return muutujat
+create proc spGetNameById2
+@Id int
+as begin
+	return (select FirstName from Employee where Id = @Id)
+end
+--- kutsume välja läbi id, mis on int
+--- aga FirstName on nvarchar(string) ja seda ei saa muuta int-ks
+declare @EmployeeName nvarchar(50)
+execute @EmployeeName = spGetNameById2 1
+print 'Name of the employee = ' + @EmployeeName
+
+--- SP eelised
+-- 1. täideviimise plaani säilitamine ja taaskasutus
+-- SP on kompileeritav ja nende täideviimine on säilitatud ja taaskasutatav
+-- 2. vähendab võrguliiklust
+-- peate saatma ainult käskluse EXECUTE SP_SPNimi
+-- 3. Parem koodi taaskasutus ja hooldamine.
+-- Sama SP-d saab kasutada igas aplikatsioonis.
+-- 4. Parem turvalisus
+-- DB kasutajale saab anda ligipääsu SP-le ja hoida ära otsest 
+-- SELECT käsklust tabelile
+-- 5. Hoiab ära SQL Injection rünnakud
+
+--- sisseehitatud string funktsioonid
+-- konverteerib ASCII tähe väärtuse numbriks
+select ascii('a')
+-- kuvab A-tähte
+select CHAR(65)
+
+-- prindime kogu tähestiku välja
+declare @Start int
+set @Start = 97
+while (@Start <= 122)
+begin
+	select char (@Start)
+	set @Start = @Start + 1
+end
+
+--- eemaldame sulgude sees vasakult poolt tühjad kohad
+select ltrim('                               Hello')
+--- tühikute eemaldamine veerust
+select LTRIM(FirstName) as FirstName, MiddleName, LastName from Employee
+
+--- eemaldame sulgude sees paremalt poolt tühjad kohad
+select RTRIM('         Hello                 ')
+
+--- keerame kooloni sees olevad andmed vastupidiseks
+--- vastavalt upper ja lower-ga saan muuta märkide suurust
+--- reverse funktsioon pöörab kõik ümber
+select REVERSE(UPPER(ltrim(FirstName))) as FirstName, MiddleName, LOWER(LastName) as asdasd,
+RTRIM(LTRIM(FirstName)) + ' ' + MiddleName + ' ' + LastName as FullName
+from Employee
+
+--- soovime teada saada, et mitu tähte on sõnal ja loeb tühikud sisse
+select FirstName, LEN(FirstName) as [Total Characters] from Employee
+--- kuidas teha niimoodi, et tühikuid ei loeks sisse
+select FirstName, LEN(ltrim(FirstName)) as [Total Characters] from Employee
+
+----left, right ja substring
+--- vasakult poolt neli esimest tähte
+select LEFT('ABCDEF', 4)
+--- paremalt poolt kolm tähte
+select RIGHT('ABCDEF', 4)
+--- kuvab @-tähemärgi asetust
+select CHARINDEX('@', 'sara@aaa.com')
+--- esimene nr peale komakohta näitab, et mitmendast alustab 
+--- ja mitu nr peale seda kuvada
+select SUBSTRING('pam@bbb.com', 5, 2)
+
+--- peale @-märki näitab tähemärke meile soovitud ulatuses
+--- numbriga reguleerin pikkust
+select substring('pam@bbb.com', charindex('@', 'pam@bbb.com') + 1,
+len('pam@bbb.com') - CHARINDEX('@', 'pam@bbb.com'))
+
+--- sisestame uue veeru tabelisse Employee
+alter table Employee
+add Email nvarchar(20)
+
+select * from Employee
+
+update Employee set Email = 'Tom@aaa.com' where Id = 1
+update Employee set Email = 'Pam@bbb.com' where Id = 2
+update Employee set Email = 'John@aaa.com' where Id = 3
+update Employee set Email = 'Sam@bbb.com' where Id = 4
+update Employee set Email = 'Todd@bbb.com' where Id = 5
+update Employee set Email = 'Ben@ccc.com' where Id = 6
+update Employee set Email = 'Sara@ccc.com' where Id = 7
+update Employee set Email = 'Valarie@aaa.com' where Id = 8
+update Employee set Email = 'James@bbb.com' where Id = 9
+update Employee set Email = 'Russel@bbb.com' where Id = 10
+
+
+---tahame teada saada domeenimesid emailis
+select SUBSTRING (Email, CHARINDEX('@', Email) + 1,
+len (Email) - charindex('@', Email)) as EmailDomain
+from Employee
+
+--- harjutus 23
+--- 6 tund SQL
