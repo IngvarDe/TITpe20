@@ -846,3 +846,6 @@ as begin
 		' Months ' + CAST(@days as nvarchar(2)) + ' Days old '
 	return @Age
 end
+
+--- 7 SQL tund
+--- harjutus 27
