@@ -849,3 +849,105 @@ end
 
 --- 7 SQL tund
 --- harjutus 27
+
+alter table Employee
+add DateOfBirth datetime
+
+select Id, FirstName, DateOfBirth, dbo.fnComputeAge(DateOfBirth) 
+as Age from Employee
+
+select dbo.fnComputeAge('01/01/1900')
+
+-- konverteerib DOB sisu
+select Id, FirstName, DateOfBirth, CAST(DateOfBirth as nvarchar)
+as ConvertedDOB from Employee
+
+select Id, FirstName, DateOfBirth, convert(nvarchar, DateOfBirth)
+as ConvertedDOB from Employee
+
+select CAST(GETDATE() as date) -- näitab tänast kp
+select CONVERT(date, GETDATE())
+
+select Id, Name, Name + ' - ' cast(Id as nvarchar) as [Name-Id]
+from EmployeesWithDates
+
+-- läbi nr saan erinevalt kuvada DOB formaati
+select Id, Name, DateOfBirth,
+CONVERT(nvarchar, DateOfBirth, 121) as ConvertedDOB
+from EmployeesWithDates
+
+select * from Employee
+
+--- matemaatilised funktsioonid
+select ABS(-101.5) -- ABS on absoluutne nr ja tulemuseks saame ilma miinuseta nr
+select CEILING(15.2) -- tagastab 16, kuvab järgmise suurema täsiarvu
+select CEILING(-15.2) -- annab 15 kuna on suurem, kui -15.2
+select FLOOR(15.2) -- annab vastuseks 15 kuna arvestab allapoole
+select FLOOR(-15.2) -- annab vastuseks -16 kuna arvestab allapoole
+select POWER(2, 4) -- hakkab korrutama 2x2x2x2, esimene arv on korrutatav arv
+-- ja teine korrutaja
+select SQRT(81) --saame vastuseks 9
+
+select RAND() -- annab alati ühe  ja sama nr. Kui tahad iga kord uut nr, siis 
+--- 'ra pane sulgudesse nr-t
+select floor(RAND() * 100) -- 1 kuni 100-ni täisnumbrid
+
+--- 10 suvalist nr-t
+declare @Counter int
+set @Counter = 1
+while (@Counter <= 10)
+begin
+	print floor(rand() * 1000)
+	set @Counter = @Counter + 1
+end
+
+select ROUND(850.556, 2) -- ümardab viimase nr järgi tuhandikuks
+select ROUND(850.556, 2, 1) -- ümardab viimase nr järgi tuhandikuks allapoole
+select ROUND(850.556, 1) -- ümardab kõige esimese nr peale komakoha järel
+select ROUND(850.556, 1, 1) -- ümardab allapoole, kõige esimese nr peale komakohta
+select ROUND(850.556, -2) -- kaks esimest nr ümardab suuremaks
+select ROUND(850.556, -1) -- näitab ainult täisarvu
+
+create function dbo.CalculateAge (@DOB date)
+returns int
+as begin
+declare @Age int
+set @Age = DATEDIFF(year, @DOB, GETDATE()) - 
+	case 
+		when (month(@DOB) > MONTH(GETDATE())) or
+			 (MONTH(@DOB) > MONTH(GETDATE()) and
+			 DAY(@DOB) > DAY(GETDATE()))
+		then 1
+		else 0
+		end
+	return @Age
+end
+
+execute dbo.CalculateAge '10/08/2015'
+
+select Id, Name, dbo.CalculateAge(DateOfBirth) as Age
+from EmployeesWithDates
+where dbo.CalculateAge(DateOfBirth) > 25
+
+insert into EmployeesWithDates (Id, Name, DateOfBirth)
+values (5, 'Todd', '1978-11-29 12:59:30.670')
+
+alter table EmployeesWithDates
+add Gender nvarchar(10)
+
+create function fn_EmployeesByGender(@Gender nvarchar(10))
+returns table
+as
+return (select Id, Name, DateOfBirth, Gender
+		from EmployeesWithDates
+		where Gender = @Gender)
+
+-- kõik naistöötajad
+select * from fn_EmployeesByGender('Female')
+
+select * from fn_EmployeesByGender('Female')
+where Name = 'Pam'
+
+
+--- 8 SQL tund
+--- harjutus 31 pooleli
