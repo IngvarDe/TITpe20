@@ -935,11 +935,11 @@ values (5, 'Todd', '1978-11-29 12:59:30.670')
 alter table EmployeesWithDates
 add Gender nvarchar(10)
 
-create function fn_EmployeesByGender(@Gender nvarchar(10))
+alter function fn_EmployeesByGender(@Gender nvarchar(10))
 returns table
 as
-return (select Id, Name, DateOfBirth, Gender
-		from EmployeesWithDates
+return (select Id, FirstName, DateOfBirth, Gender, DepartmentId
+		from Employee
 		where Gender = @Gender)
 
 -- kõik naistöötajad
@@ -951,3 +951,134 @@ where Name = 'Pam'
 
 --- 8 SQL tund
 --- harjutus 31 pooleli
+select * from Employee
+select * from Department
+
+select FirstName, Gender, DepartmentName
+from fn_EmployeesByGender('Male') E
+join Department D on D.Id = E.DepartmentId
+
+--- tabelisiseseväärtusega funktsioon e Inline Table Valued Function
+create function fn_InlineValue_GetEmployees()
+returns table
+as
+	return (Select Id, FirstName, CAST(DateOfBirth as Date) as DOB
+	from Employee)
+
+--- mitme avaldisega tabeliväärtusega funktsioon
+--- multi-statement table valued function
+create function fn_MultiValued()
+returns @Table table(Id int, Name nvarchar(20), DOB Date)
+as begin
+	insert into @Table
+	select Id, FirstName, CAST(DateOfBirth as Date)
+	from Employee
+	return
+end
+
+select * from fn_InlineValue_GetEmployees()
+select * from fn_MultiValued()
+
+--- erinevused kahe funktsiooni vahel
+-- 1. tabelisiseseväärtusega funktsioonis RETURNS tingimus ei 
+-- saa sisaldada tabli struktuuri. Samas mitme väärtusega 
+-- täpsustatakse tabeli struktuur
+-- 2. tabelisiseseväärtusega ei ole begin-i ja end-i
+-- 3. tabelisiseseväärtusega funktsioonil on parem jõudlus
+-- 4. tabelisiseseväärtusega funktsioonis saab selle alla 
+-- kuuluvat tabelit (sisu osas) muuta
+
+update fn_InlineValue_GetEmployees() set FirstName = 'Tom'
+where Id = 1
+
+select * from EmployeesWithDates
+
+alter table EmployeesWithDates
+add DepartmentId int
+
+-- ilma krüpteerimiseta funktsioon
+create function fn_GetEmployeeNameById(@Id int)
+returns nvarchar(20)
+as begin
+	return (select Name from EmployeesWithDates where Id = @Id)
+end
+
+sp_helptext fn_GetEmployeeNameById
+
+-- funktsiooni krüpteerimine
+alter function fn_GetEmployeeNameById(@Id int)
+returns nvarchar(20)
+with encryption
+as begin
+	return (select Name from EmployeesWithDates where Id = @Id)
+end
+--- kasutame uuesti hepltexti funktsiooni sisu vaatamiseks
+
+-- loome funktsiooni koos WITH SCHEMABINDING-ga
+
+alter function fn_GetEmployeeNameById(@Id int)
+returns nvarchar(20)
+with schemabinding
+as begin
+	return (select Name from dbo.EmployeesWithDates where Id = @Id)
+end
+
+drop table EmployeesWithDates
+-- kui on kasutatud schemabindingut, siis sellega seotud tabelit 
+-- ei saa kustutada
+
+-- ajutised tabelid e Temp Table-d
+-- teeme lokaalse Temp tabeli
+create table #PersonDetails(Id int, Name nvarchar(20))
+
+-- sisestame andmed temp tabelisse
+insert into #PersonDetails values(1, 'Mike')
+insert into #PersonDetails values(2, 'John')
+insert into #PersonDetails values(3, 'Todd')
+
+select * from #PersonDetails
+
+--- kuidas saame teada, et local temp table on loodud
+select Name from tempdb..sysobjects
+where name like '#PersonDetails%'
+
+-- temp table kustutamine
+drop table #PersonDetails
+
+--- kui temp table on loodud stored procedure sees, siis
+--- see kustutakse peale SP lõpuleviimist automaatselt ära
+create procedure spCreateLocalTempTable
+as begin
+	create table #PersonDetails(Id int, Name nvarchar(20))
+
+	insert into #PersonDetails values(1, 'Mike')
+	insert into #PersonDetails values(2, 'John')
+	insert into #PersonDetails values(3, 'Todd')
+
+	select * from #PersonDetails
+end
+
+exec spCreateLocalTempTable
+
+--- globaalne tabel märgitakse: ##TabeliNimi
+create table ##EmployeeDetails(Id int, Name nvarchar(20))
+
+-- globaalseid tabeleid näevad kõik selle serveri kasutajad ja 
+-- nii kaua kuni viimane kasutaja selle kasutamise lõpetab
+
+-- mitu kasutajat saavad luua lokaalse tabeli, millel on sama nimi
+-- aga globaalse oma peab olema unikaalne
+
+-- Kokkuvõte
+-- 1. lokaalsed ajutised tabelid on ühe #-märgiga, aga
+-- globaalsed on kahe ##
+-- 2. SQL server lisab suvalisi numbreid lokaalse ajutise 
+-- tabeli nimesse, aga globaalse puhul seda ei ole
+-- 3. lokaalsed on ainult nähtavad selles sessioonis, aga
+-- globaalsed on nähtavad kõikides sessioonides
+-- 4. lokaalsed ajutised tabelid on automaatselt kustutavad,
+-- kui selle loonud sessioon on kinni pandud. Globaalsed ajutised 
+-- tabelid lõpetatakse viimase viitava ühenduse kinni panekul 
+
+--- 9 SQL tund
+--- harjutus 34 lõpetasime
